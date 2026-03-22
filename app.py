@@ -1,7 +1,7 @@
 def predict(img_file):
     try:
         files = {
-            "file": (img_file.name, img_file.getvalue(), img_file.type)
+            "file": ("image.jpg", img_file.getvalue(), "image/jpeg")
         }
 
         headers = {
@@ -10,11 +10,14 @@ def predict(img_file):
 
         response = requests.post(API_URL, files=files, headers=headers)
 
+        st.write("Status:", response.status_code)
+        st.write("Response:", response.text)
+
         if response.status_code == 200:
             data = response.json()
             return data["leukemia"], data["healthy"]
         else:
-            st.error("❌ API Error. Check logs.")
+            st.error("❌ API Error. Check response above.")
             return None, None
 
     except Exception as e:
