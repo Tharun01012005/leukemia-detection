@@ -1,59 +1,43 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import random
+import tflite_runtime.interpreter as tflite
 
-# ---------------- PAGE CONFIG ----------------
+# Load TFLite model
+interpreter = tflite.Interpreter(model_path="leukemia_model.tflite")
+interpreter.allocate_tensors()
+
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+IMG_SIZE = 224
+
 st.set_page_config(page_title="Leukemia Detection", layout="centered")
-
-# ---------------- CUSTOM UI ----------------
-st.markdown("""
-    <style>
-    body {
-        background-color: #0e1117;
-        color: white;
-    }
-    .stButton>button {
-        background-color: #ff4b4b;
-        color: white;
-        font-size: 18px;
-        border-radius: 10px;
-        padding: 10px 20px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# ---------------- TITLE ----------------
 st.title("🧬 Leukemia Detection System")
-st.write("Upload a blood sample image to detect leukemia probability")
 
-# ---------------- FILE UPLOAD ----------------
-uploaded_file = st.file_uploader("📤 Upload Blood Image", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Upload Blood Image", type=["jpg","png","jpeg"])
 
-# ---------------- FAKE PREDICTION FUNCTION ----------------
 def predict(img):
-    # Simulated prediction (for deployment demo)
-    leukemia = random.uniform(80, 95)   # realistic high accuracy
-    healthy = 100 - leukemia
+    img = img.resize((IMG_SIZE, IMG_SIZE))
+    img = np.array(img) / 255.0
+    img = np.expand_dims(img, axis=0).astype(np.float32)
+
+    interpreter.set_tensor(input_details[0]['index'], img)
+    interpreter.invoke()
+    pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
+
+    leukemia = pred * 100
+    healthy = (1 - pred) * 100
+
     return leukemia, healthy
 
-# ---------------- RESULT ----------------
-if uploaded_file is not None:
+if uploaded_file:
     img = Image.open(uploaded_file)
+    st.image(img)
 
-    st.image(img, caption="Uploaded Image", use_column_width=True)
-
-    if st.button("🔍 Analyze"):
+    if st.button("Analyze"):
         leukemia, healthy = predict(img)
 
-        st.success(f"🧬 Leukemia Probability: {leukemia:.2f}%")
-        st.info(f"💚 Healthy Probability: {healthy:.2f}%")
-
-        st.write("### Risk Level")
+        st.success(f"Leukemia: {leukemia:.2f}%")
+        st.info(f"Healthy: {healthy:.2f}%")
         st.progress(int(leukemia))
-
-        # Extra message
-        if leukemia > 85:
-            st.error("⚠️ High Risk Detected - Consult a medical professional")
-        else:
-            st.warning("🟡 Moderate Risk - Further analysis recommended")
