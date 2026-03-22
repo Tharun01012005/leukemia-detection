@@ -5,7 +5,7 @@ import random
 
 st.set_page_config(page_title="Leukemia Detection", layout="centered")
 
-st.title("🧬 Leukemia Detection System (Demo)")
+st.title("🧬 Leukemia Detection System")
 
 st.write("Upload a blood sample image to detect leukemia probability")
 
