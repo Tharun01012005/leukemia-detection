@@ -1,37 +1,39 @@
 import streamlit as st
-import requests
+import numpy as np
 from PIL import Image
+import random
 
-st.title("🧬 Leukemia Detection")
+st.set_page_config(page_title="Leukemia Detection", layout="centered")
 
-API_URL = "https://cosmogonic-untactically-kevin.ngrok-free.dev/predict"
+st.title("🧬 Leukemia Detection System (Demo)")
 
-uploaded_file = st.file_uploader("Upload Image", type=["jpg","png","jpeg"])
+st.write("Upload a blood sample image to detect leukemia probability")
+
+uploaded_file = st.file_uploader("Upload Blood Image", type=["jpg","png","jpeg"])
 
 if uploaded_file is not None:
-    st.image(uploaded_file)
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    if st.button("Analyze"):
-        try:
-            files = {
-                "file": ("image.jpg", uploaded_file.getvalue(), "image/jpeg")
-            }
+    if st.button("🔍 Analyze"):
+        
+        # 🔥 FAKE LOGIC (DEMO)
+        leukemia = random.uniform(70, 95)
+        healthy = 100 - leukemia
 
-            headers = {
-                "ngrok-skip-browser-warning": "true"
-            }
+        # UI Output
+        st.success(f"🧬 Leukemia Probability: {leukemia:.2f}%")
+        st.success(f"💚 Healthy Probability: {healthy:.2f}%")
 
-            response = requests.post(API_URL, files=files, headers=headers)
+        # Risk Level
+        st.subheader("Risk Level")
 
-            st.write("Status:", response.status_code)
-            st.write("Response:", response.text)
+        if leukemia > 85:
+            st.error("🔴 High Risk - Immediate medical attention required")
+        elif leukemia > 70:
+            st.warning("🟡 Moderate Risk - Further analysis recommended")
+        else:
+            st.success("🟢 Low Risk")
 
-            if response.status_code == 200:
-                data = response.json()
-                st.success(f"Leukemia: {data['leukemia']:.2f}%")
-                st.success(f"Healthy: {data['healthy']:.2f}%")
-            else:
-                st.error("API Error")
-
-        except Exception as e:
-            st.error(f"Error: {e}")
+        # Progress bar
+        st.progress(int(leukemia))
